@@ -9,7 +9,7 @@
  * @author    Alexander V. Butenko <a.butenka@gmail.com>
  * @copyright Copyright (c) 2010-2017
  * @license   http://opensource.org/licenses/gpl-3.0.html GNU Public License
- * @link      http://github.com/joshcam/PHP-MySQLi-Database-Class 
+ * @link      http://github.com/joshcam/PHP-MySQLi-Database-Class
  * @version   2.9.3
  */
 
@@ -28,7 +28,7 @@ class MysqliDb
      *
      * @var string
      */
-    public static $prefix = '';
+    public $prefix = '';
 
     /**
      * MySQLi instances
@@ -243,7 +243,7 @@ class MysqliDb
      * @var string the name of a default (main) mysqli connection
      */
     public $defConnectionName = 'default';
-    
+
     public $autoReconnect = true;
     protected $autoReconnectCount = 0;
 
@@ -306,7 +306,7 @@ class MysqliDb
     {
         if(!isset($this->connectionsSettings[$connectionName]))
             throw new Exception('Connection profile not set');
-        
+
         $pro = $this->connectionsSettings[$connectionName];
         $params = array_values($pro);
         $charset = array_pop($params);
@@ -509,7 +509,7 @@ class MysqliDb
      */
     public function setPrefix($prefix = '')
     {
-        self::$prefix = $prefix;
+        $this->prefix = $prefix;
         return $this;
     }
 
@@ -724,7 +724,7 @@ class MysqliDb
         $column = is_array($columns) ? implode(', ', $columns) : $columns;
 
         if (strpos($tableName, '.') === false) {
-            $this->_tableName = self::$prefix . $tableName;
+            $this->_tableName = $this->prefix . $tableName;
         } else {
             $this->_tableName = $tableName;
         }
@@ -904,7 +904,7 @@ class MysqliDb
             return;
         }
 
-        $this->_query = "UPDATE " . self::$prefix . $tableName;
+        $this->_query = "UPDATE " . $this->prefix . $tableName;
 
         $stmt = $this->_buildQuery($numRows, $tableData);
         $status = $stmt->execute();
@@ -932,7 +932,7 @@ class MysqliDb
             return;
         }
 
-        $table = self::$prefix . $tableName;
+        $table = $this->prefix . $tableName;
 
         if (count($this->_join)) {
             $this->_query = "DELETE " . preg_replace('/.* (.*)/', '$1', $table) . " FROM " . $table;
@@ -1072,7 +1072,7 @@ class MysqliDb
         }
 
         if (!is_object($joinTable)) {
-            $joinTable = self::$prefix . $joinTable;
+            $joinTable = $this->prefix . $joinTable;
         }
 
         $this->_join[] = Array($joinType, $joinTable, $joinCondition);
@@ -1113,7 +1113,7 @@ class MysqliDb
 		}
 
 		// Add the prefix to the import table
-		$table = self::$prefix . $importTable;
+		$table = $this->prefix . $importTable;
 
 		// Add 1 more slash to every slash so maria will interpret it as a path
 		$importFile = str_replace("\\", "\\\\", $importFile);
@@ -1179,7 +1179,7 @@ class MysqliDb
 		}
 
 		// Add the prefix to the import table
-		$table = self::$prefix . $importTable;
+		$table = $this->prefix . $importTable;
 
 		// Add 1 more slash to every slash so maria will interpret it as a path
 		$importFile = str_replace("\\", "\\\\", $importFile);
@@ -1225,7 +1225,7 @@ class MysqliDb
         // Add table prefix to orderByField if needed.
         //FIXME: We are adding prefix only if table is enclosed into `` to distinguish aliases
         // from table names
-        $orderByField = preg_replace('/(\`)([`a-zA-Z0-9_]*\.)/', '\1' . self::$prefix . '\2', $orderByField);
+        $orderByField = preg_replace('/(\`)([`a-zA-Z0-9_]*\.)/', '\1' . $this->prefix . '\2', $orderByField);
 
 
         if (empty($orderbyDirection) || !in_array($orderbyDirection, $allowedDirection)) {
@@ -1315,13 +1315,13 @@ class MysqliDb
 					if($key > 0) {
 						$this->_query .= ",";
 					}
-					$this->_query .= " ".self::$prefix.$value." ".$this->_tableLockMethod;
+					$this->_query .= " ".$this->prefix.$value." ".$this->_tableLockMethod;
 				}
 			}
 		}
 		else{
 			// Build the table prefix
-			$table = self::$prefix . $table;
+			$table = $this->prefix . $table;
 
 			// Build the query
 			$this->_query = "LOCK TABLES ".$table." ".$this->_tableLockMethod;
@@ -1519,7 +1519,7 @@ class MysqliDb
             return;
         }
 
-        $this->_query = $operation . " " . implode(' ', $this->_queryOptions) . " INTO " . self::$prefix . $tableName;
+        $this->_query = $operation . " " . implode(' ', $this->_queryOptions) . " INTO " . $this->prefix . $tableName;
         $stmt = $this->_buildQuery(null, $insertData);
         $status = $stmt->execute();
         $this->_stmtError = $stmt->error;
@@ -1624,7 +1624,7 @@ class MysqliDb
             }
 
             if ($this->_nestJoin && $field->table != $this->_tableName) {
-                $field->table = substr($field->table, strlen(self::$prefix));
+                $field->table = substr($field->table, strlen($this->prefix));
                 $row[$field->table][$field->name] = null;
                 $parameters[] = & $row[$field->table][$field->name];
             } else {
@@ -2353,7 +2353,7 @@ class MysqliDb
         }
 
         foreach ($tables as $i => $value)
-            $tables[$i] = self::$prefix . $value;
+            $tables[$i] = $this->prefix . $value;
         $db = isset($this->connectionsSettings[$this->defConnectionName]) ? $this->connectionsSettings[$this->defConnectionName]['db'] : null;
         $this->where('table_schema', $db);
         $this->where('table_name', $tables, 'in');
@@ -2411,7 +2411,7 @@ class MysqliDb
      */
     public function joinWhere($whereJoin, $whereProp, $whereValue = 'DBNULL', $operator = '=', $cond = 'AND')
     {
-        $this->_joinAnd[self::$prefix . $whereJoin][] = Array ($cond, $whereProp, $operator, $whereValue);
+        $this->_joinAnd[$this->prefix . $whereJoin][] = Array ($cond, $whereProp, $operator, $whereValue);
         return $this;
     }
 
@@ -2447,8 +2447,8 @@ class MysqliDb
             else
                 $joinStr = $joinTable;
 
-            $this->_query .= " " . $joinType. " JOIN " . $joinStr . 
-                (false !== stripos($joinCondition, 'using') ? " " : " on ") 
+            $this->_query .= " " . $joinType. " JOIN " . $joinStr .
+                (false !== stripos($joinCondition, 'using') ? " " : " on ")
                 . $joinCondition;
 
             // Add join and query
